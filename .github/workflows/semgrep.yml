@@ -1,0 +1,39 @@
+name: Semgrep Local Scan
+
+on:
+  pull_request:
+    branches: [master]
+  push:
+    branches: [master]
+
+jobs:
+  semgrep:
+    name: Run Semgrep Locally
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python (required for Semgrep CLI)
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install Semgrep CLI
+        run: pip install semgrep
+
+      - name: Run Semgrep scan
+        run: semgrep scan --config=auto --sarif --output=semgrep.sarif
+        continue-on-error: true
+        
+      - name: Upload SARIF file
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: semgrep.sarif
+
+      - name: Upload Semgrep result
+        uses: actions/upload-artifact@v3
+        with:
+          name: semgrep-results
+          path: semgrep.sarif
